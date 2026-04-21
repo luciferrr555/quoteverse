@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}🆕 Latest Quotes — QuoteVerse{% endblock %}
+{% block content %}
+<div class="container page-container">
+    <div class="page-header">
+        <h1 class="page-title">🆕 <span class="gradient-text">Latest Quotes</span></h1>
+        <p class="page-subtitle">Fresh drops — newest quotes, first</p>
+    </div>
+    <div class="quote-grid">
+        {% for q in quotes.items %}
+        <div class="quote-card" data-id="{{ q.id }}" style="--card-color: {{ category_colors.get(q.category, '#6366f1') }}">
+            <div class="card-glow"></div>
+            <div class="card-header">
+                <span class="category-badge" style="background: {{ category_colors.get(q.category, '#6366f1') }}22; color: {{ category_colors.get(q.category, '#6366f1') }}; border-color: {{ category_colors.get(q.category, '#6366f1') }}44;">
+                    {{ category_icons.get(q.category, '📝') }} {{ q.category }}
+                </span>
+                <span class="quote-time">{{ q.created_at.strftime('%b %d') }}</span>
+            </div>
+            <blockquote class="quote-text">{{ q.text }}</blockquote>
+            <div class="quote-author">— {{ q.author }}</div>
+            <div class="card-actions">
+                <button class="action-btn like-btn {% if current_user.is_authenticated and current_user.has_liked(q.id) %}liked{% endif %}" onclick="toggleLike({{ q.id }}, this)"><i class="fas fa-heart"></i><span class="like-count">{{ q.likes_count }}</span></button>
+                <button class="action-btn save-btn {% if current_user.is_authenticated and current_user.has_favorited(q.id) %}saved{% endif %}" onclick="toggleFavorite({{ q.id }}, this)"><i class="fas fa-star"></i></button>
+                <button class="action-btn copy-btn" onclick="copyQuote('{{ q.text|replace("'","\\'") }}', this)"><i class="fas fa-copy"></i></button>
+                <button class="action-btn download-btn" onclick="openImageModal('{{ q.text|replace("'","\\'") }}', '{{ q.author }}')"><i class="fas fa-image"></i></button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% if quotes.pages > 1 %}
+    <div class="pagination">
+        {% if quotes.has_prev %}<a href="?page={{ quotes.prev_num }}" class="btn btn-ghost">← Prev</a>{% endif %}
+        <span class="page-info">Page {{ quotes.page }} of {{ quotes.pages }}</span>
+        {% if quotes.has_next %}<a href="?page={{ quotes.next_num }}" class="btn btn-primary">Next →</a>{% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

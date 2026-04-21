@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}🔥 Trending Quotes — QuoteVerse{% endblock %}
+{% block content %}
+<div class="container page-container">
+    <div class="page-header">
+        <h1 class="page-title">🔥 <span class="gradient-text">Trending</span></h1>
+        <p class="page-subtitle">The most loved quotes right now, ranked by engagement</p>
+    </div>
+    <div class="quote-grid">
+        {% for q in quotes %}
+        <div class="quote-card" data-id="{{ q.id }}" style="--card-color: {{ category_colors.get(q.category, '#6366f1') }}">
+            <div class="trend-badge">#{{ loop.index }}</div>
+            <div class="card-glow"></div>
+            <div class="card-header">
+                <span class="category-badge" style="background: {{ category_colors.get(q.category, '#6366f1') }}22; color: {{ category_colors.get(q.category, '#6366f1') }}; border-color: {{ category_colors.get(q.category, '#6366f1') }}44;">
+                    {{ category_icons.get(q.category, '📝') }} {{ q.category }}
+                </span>
+                <span class="quote-views"><i class="fas fa-eye"></i> {{ q.views }}</span>
+            </div>
+            <blockquote class="quote-text">{{ q.text }}</blockquote>
+            <div class="quote-author">— {{ q.author }}</div>
+            <div class="card-actions">
+                <button class="action-btn like-btn {% if current_user.is_authenticated and current_user.has_liked(q.id) %}liked{% endif %}" onclick="toggleLike({{ q.id }}, this)">
+                    <i class="fas fa-heart"></i><span class="like-count">{{ q.likes_count }}</span>
+                </button>
+                <button class="action-btn save-btn {% if current_user.is_authenticated and current_user.has_favorited(q.id) %}saved{% endif %}" onclick="toggleFavorite({{ q.id }}, this)">
+                    <i class="fas fa-star"></i>
+                </button>
+                <button class="action-btn copy-btn" onclick="copyQuote('{{ q.text|replace("'","\\'") }}', this)">
+                    <i class="fas fa-copy"></i>
+                </button>
+                <button class="action-btn download-btn" onclick="openImageModal('{{ q.text|replace("'","\\'") }}', '{{ q.author }}')">
+                    <i class="fas fa-image"></i>
+                </button>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state"><div class="empty-icon">🔥</div><h3>No trending quotes yet</h3><p>Start liking quotes to make them trend!</p></div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

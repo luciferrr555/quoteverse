@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}QuoteVerse — Daily Motivational Quotes{% endblock %}
+
+{% block content %}
+<!-- ── HERO ──────────────────────────────────────────────── -->
+<section class="hero">
+    <div class="hero-content">
+        <h1 class="hero-title">Words That <span class="gradient-text">Change Lives</span></h1>
+        <p class="hero-subtitle">Discover, save, and share quotes that move you. Fresh motivation every day. 🚀</p>
+        <div class="hero-actions">
+            <a href="/ai/" class="btn btn-primary btn-lg">
+                <i class="fas fa-robot"></i> Generate with AI
+            </a>
+            <a href="/categories" class="btn btn-ghost btn-lg">Explore Categories</a>
+        </div>
+        <div class="hero-stats">
+            <div class="stat"><strong id="totalQuotes">...</strong> Quotes</div>
+            <div class="stat-divider">•</div>
+            <div class="stat"><strong>10</strong> Categories</div>
+            <div class="stat-divider">•</div>
+            <div class="stat"><strong>Free</strong> Forever</div>
+        </div>
+    </div>
+    <div class="hero-bg"></div>
+</section>
+
+<!-- ── CATEGORY FILTER BAR ───────────────────────────────── -->
+<section class="filter-bar-section">
+    <div class="container">
+        <div class="filter-bar" id="filterBar">
+            <a href="/" class="filter-chip {% if not active_category %}active{% endif %}">All ✨</a>
+            {% for cat in categories %}
+            <a href="/?category={{ cat }}"
+               class="filter-chip {% if active_category == cat %}active{% endif %}"
+               style="--chip-color: {{ category_colors.get(cat, '#6366f1') }}">
+                {{ category_icons.get(cat, '📝') }} {{ cat }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- ── ADSENSE BANNER (placeholder) ─────────────────────── -->
+<div class="container">
+    <div class="ad-banner-placeholder" style="display:none;">
+        <!-- <ins class="adsbygoogle" data-ad-client="ca-pub-XXXX" data-ad-slot="XXXX" data-ad-format="auto"></ins> -->
+    </div>
+</div>
+
+<!-- ── QUOTE FEED ────────────────────────────────────────── -->
+<section class="feed-section">
+    <div class="container">
+        <div class="quote-grid" id="quoteGrid">
+            {% for q in quotes.items %}
+            {% include "partials/quote_card.html" %}
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">📭</div>
+                <h3>No quotes yet</h3>
+                <p>Be the first to submit a quote!</p>
+                <a href="/submit" class="btn btn-primary">Submit Quote</a>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Skeleton Loaders (hidden by default) -->
+        <div class="skeleton-grid" id="skeletonGrid" style="display:none;">
+            {% for i in range(6) %}
+            <div class="quote-card skeleton">
+                <div class="skeleton-text skeleton-text-lg"></div>
+                <div class="skeleton-text skeleton-text-sm"></div>
+                <div class="skeleton-text skeleton-text-sm" style="width:60%"></div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Infinite Scroll Trigger -->
+        <div id="infiniteScrollTrigger" class="scroll-trigger"
+             data-page="{{ quotes.next_num or '' }}"
+             data-has-next="{{ 'true' if quotes.has_next else 'false' }}"
+             data-category="{{ active_category or '' }}">
+        </div>
+
+        {% if not quotes.has_next and quotes.total == 0 %}{% else %}
+        <div class="load-indicator" id="loadIndicator" style="display:none;">
+            <div class="spinner"></div>
+            <span>Loading more quotes...</span>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- ── QUOTE IMAGE MODAL ──────────────────────────────────── -->
+<div class="modal-overlay" id="imageModalOverlay">
+    <div class="modal image-modal" id="imageModal">
+        <button class="modal-close" onclick="closeImageModal()">×</button>
+        <div class="quote-poster" id="quotePoster">
+            <div class="poster-bg"></div>
+            <div class="poster-logo">✨ QuoteVerse</div>
+            <blockquote class="poster-text" id="posterText"></blockquote>
+            <div class="poster-author" id="posterAuthor"></div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-primary" onclick="downloadPoster()">
+                <i class="fas fa-download"></i> Download Image
+            </button>
+            <button class="btn btn-ghost" onclick="closeImageModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── COMMENT MODAL ──────────────────────────────────────── -->
+<div class="modal-overlay" id="commentModalOverlay">
+    <div class="modal comment-modal" id="commentModal">
+        <div class="modal-header">
+            <h3><i class="fas fa-comments"></i> Comments</h3>
+            <button class="modal-close" onclick="closeCommentModal()">×</button>
+        </div>
+        <div class="comment-list" id="commentList"></div>
+        {% if current_user.is_authenticated %}
+        <div class="comment-input-area">
+            <input type="text" id="commentInput" placeholder="Add a comment..." maxlength="500">
+            <button onclick="submitComment()" class="btn btn-primary btn-sm">Post</button>
+        </div>
+        {% else %}
+        <div class="comment-login-prompt">
+            <a href="/auth/login">Login to comment</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Fetch total quote count for hero stat
+fetch('/api/quotes?page=1').then(r=>r.json()).then(d=>{
+    document.getElementById('totalQuotes').textContent = d.total.toLocaleString();
+});
+</script>
+{% endblock %}

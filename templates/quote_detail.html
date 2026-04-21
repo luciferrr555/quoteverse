@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}{{ quote.text[:60] }} — QuoteVerse{% endblock %}
+{% block meta_description %}{{ quote.text[:155] }}{% endblock %}
+{% block og_title %}{{ quote.text[:70] }}{% endblock %}
+{% block content %}
+<div class="container page-container" style="max-width: 800px;">
+    <!-- Quote Detail Card -->
+    <div class="detail-card glass-card" style="--card-color: {{ color }}">
+        <div class="detail-category">
+            <span class="category-badge" style="background: {{ color }}22; color: {{ color }}; border-color: {{ color }}44;">
+                {{ quote.category }}
+            </span>
+            <span class="quote-views"><i class="fas fa-eye"></i> {{ quote.views }} views</span>
+        </div>
+        <blockquote class="detail-quote-text">"{{ quote.text }}"</blockquote>
+        <div class="detail-author">— {{ quote.author }}</div>
+        <div class="detail-meta">
+            <span><i class="fas fa-calendar"></i> {{ quote.created_at.strftime('%B %d, %Y') }}</span>
+            {% if quote.author_rel %}<span>By <a href="/profile/{{ quote.author_rel.username }}">{{ quote.author_rel.username }}</a></span>{% endif %}
+        </div>
+
+        <div class="detail-actions">
+            <button class="btn btn-primary like-btn {% if liked %}liked{% endif %}" onclick="toggleLike({{ quote.id }}, this)">
+                <i class="fas fa-heart"></i> <span class="like-count">{{ quote.likes_count }}</span> Likes
+            </button>
+            <button class="btn btn-ghost save-btn {% if favorited %}saved{% endif %}" onclick="toggleFavorite({{ quote.id }}, this)">
+                <i class="fas fa-star"></i> {% if favorited %}Saved{% else %}Save{% endif %}
+            </button>
+            <button class="btn btn-ghost" onclick="copyQuote('{{ quote.text|replace("'","\\'") }}', this)">
+                <i class="fas fa-copy"></i> Copy
+            </button>
+            <button class="btn btn-ghost" onclick="openImageModal('{{ quote.text|replace("'","\\'") }}', '{{ quote.author }}')">
+                <i class="fas fa-image"></i> Download
+            </button>
+        </div>
+        <div class="share-row">
+            <span>Share:</span>
+            <a href="https://wa.me/?text={{ (quote.text + ' — ' + quote.author)|urlencode }}" target="_blank" class="share-pill whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+            <a href="https://twitter.com/intent/tweet?text={{ (quote.text)|urlencode }}&hashtags=QuoteVerse" target="_blank" class="share-pill twitter"><i class="fab fa-x-twitter"></i> Twitter</a>
+        </div>
+    </div>
+
+    <!-- Comments Section -->
+    <div class="comments-section glass-card">
+        <h3><i class="fas fa-comments"></i> Comments ({{ quote.comments_count }})</h3>
+        {% if current_user.is_authenticated %}
+        <div class="comment-input-area">
+            <input type="text" id="commentInputDetail" placeholder="Write a comment..." maxlength="500">
+            <button class="btn btn-primary btn-sm" onclick="submitCommentDetail({{ quote.id }})">Post</button>
+        </div>
+        {% else %}
+        <p><a href="/auth/login">Login</a> to comment.</p>
+        {% endif %}
+        <div class="comment-list" id="commentListDetail">
+            {% for c in comments %}
+            <div class="comment-item">
+                <div class="comment-avatar">{{ c.comment_owner.username[0].upper() }}</div>
+                <div class="comment-body">
+                    <strong>{{ c.comment_owner.username }}</strong>
+                    <span class="comment-date">{{ c.created_at.strftime('%b %d') }}</span>
+                    <p>{{ c.text }}</p>
+                </div>
+            </div>
+            {% else %}
+            <p class="no-comments">No comments yet. Be the first!</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Related Quotes -->
+    {% if related %}
+    <div class="related-section">
+        <h3>More {{ quote.category }} Quotes</h3>
+        <div class="quote-grid">
+            {% for q in related %}
+            {% set category_icons = {'Success':'🏆','Study':'📚','Gym':'💪','Love':'❤️','Breakup':'💔','Money':'💰','Discipline':'🎯','Life':'🌱','Mindset':'🧠','Hinglish':'🇮🇳'} %}
+            {% set category_colors = {'Success':'#f59e0b','Study':'#3b82f6','Gym':'#ef4444','Love':'#ec4899','Breakup':'#8b5cf6','Money':'#10b981','Discipline':'#f97316','Life':'#06b6d4','Mindset':'#6366f1','Hinglish':'#84cc16'} %}
+            {% include "partials/quote_card.html" %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+<script>
+function submitCommentDetail(quoteId) {
+    const input = document.getElementById('commentInputDetail');
+    const text = input.value.trim();
+    if (!text) return;
+    fetch(`/api/comment/${quoteId}`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({text})
+    }).then(r => r.json()).then(c => {
+        if (c.error) return showToast(c.error, 'danger');
+        const list = document.getElementById('commentListDetail');
+        const noComments = list.querySelector('.no-comments');
+        if (noComments) noComments.remove();
+        const div = document.createElement('div');
+        div.className = 'comment-item';
+        div.innerHTML = `<div class="comment-avatar">${c.username[0].toUpperCase()}</div>
+            <div class="comment-body"><strong>${c.username}</strong><span class="comment-date">Just now</span><p>${c.text}</p></div>`;
+        list.prepend(div);
+        input.value = '';
+        showToast('Comment posted! 💬', 'success');
+    });
+}
+</script>
+{% endblock %}

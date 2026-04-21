@@ -1,0 +1,368 @@
+{% extends "base.html" %}
+{% block title %}AI Quote Tools — QuoteVerse{% endblock %}
+{% block content %}
+<div class="container page-container">
+    <div class="page-header">
+        <h1 class="page-title"><span class="gradient-text">🤖 AI Tools</span></h1>
+        <p class="page-subtitle">Generate, rewrite, and create captions — powered by smart AI</p>
+        {% if has_real_ai %}
+        <div style="display:inline-flex;align-items:center;gap:0.4rem;margin-top:0.75rem;padding:0.35rem 1rem;border-radius:100px;background:linear-gradient(135deg,rgba(66,133,244,0.15),rgba(15,157,88,0.15));border:1px solid rgba(66,133,244,0.3);font-size:0.82rem;font-weight:600;color:#8ab4f8;">
+            <i class="fas fa-bolt"></i> Powered by Google Gemini AI
+        </div>
+        {% else %}
+        <div style="display:inline-flex;align-items:center;gap:0.4rem;margin-top:0.75rem;padding:0.35rem 1rem;border-radius:100px;background:var(--bg-card);border:1px solid var(--glass-border);font-size:0.82rem;color:var(--text-muted);">
+            <i class="fas fa-info-circle"></i> Using smart templates — add GEMINI_API_KEY to .env for real AI
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Daily Quote -->
+    <div class="ai-card daily-card glass-card">
+        <div class="ai-card-header">
+            <h2>🌅 Your Daily Quote</h2>
+            <p>A personalized quote based on your mood today</p>
+        </div>
+        <div class="mood-selector">
+            <label>How are you feeling today?</label>
+            <div class="mood-pills">
+                <button class="mood-pill active" data-mood="default">✨ Normal</button>
+                <button class="mood-pill" data-mood="happy">😊 Happy</button>
+                <button class="mood-pill" data-mood="sad">😢 Sad</button>
+                <button class="mood-pill" data-mood="productive">⚡ Productive</button>
+                <button class="mood-pill" data-mood="heartbroken">💔 Heartbroken</button>
+                <button class="mood-pill" data-mood="tired">😴 Tired</button>
+                <button class="mood-pill" data-mood="broke">💸 Broke</button>
+                <button class="mood-pill" data-mood="studying">📚 Studying</button>
+            </div>
+        </div>
+        <div class="daily-quote-display glass-card" id="dailyQuoteDisplay">
+            <div class="spinner"></div>
+        </div>
+    </div>
+
+    <!-- Generate Quotes -->
+    <div class="ai-card glass-card">
+        <div class="ai-card-header">
+            <h2>⚡ Generate Quotes</h2>
+            <p>Enter a mood and get multiple fresh quotes instantly</p>
+        </div>
+        <div class="ai-input-row">
+            <select id="genMood" class="ai-select">
+                <option value="motivation">✨ Motivation</option>
+                <option value="success">🏆 Success</option>
+                <option value="gym">💪 Gym</option>
+                <option value="sad">😢 Sad</option>
+                <option value="heartbreak">💔 Heartbreak</option>
+                <option value="study">📚 Study</option>
+                <option value="money">💰 Money</option>
+                <option value="discipline">🎯 Discipline</option>
+                <option value="hinglish">🇮🇳 Hinglish</option>
+            </select>
+            <select id="genCount" class="ai-select">
+                <option value="3">3 Quotes</option>
+                <option value="5" selected>5 Quotes</option>
+                <option value="8">8 Quotes</option>
+                <option value="10">10 Quotes</option>
+            </select>
+            <button class="btn btn-primary" onclick="generateQuotes()" id="genBtn">
+                <i class="fas fa-magic"></i> Generate
+            </button>
+        </div>
+        <div id="generatedQuotes" class="generated-list"></div>
+    </div>
+
+    <!-- Rewrite Quote -->
+    <div class="ai-card glass-card">
+        <div class="ai-card-header">
+            <h2>🔄 Rewrite a Quote</h2>
+            <p>Transform any quote into a different style</p>
+        </div>
+        <textarea id="rewriteInput" class="ai-textarea" placeholder="Paste any quote here..." rows="3" maxlength="300"></textarea>
+        <div class="style-buttons">
+            <button class="style-btn active" data-style="deep">🔮 Deep</button>
+            <button class="style-btn" data-style="funny">😂 Funny</button>
+            <button class="style-btn" data-style="savage">🔥 Savage</button>
+            <button class="style-btn" data-style="romantic">❤️ Romantic</button>
+        </div>
+        <button class="btn btn-primary" onclick="rewriteQuote()" id="rewriteBtn">
+            <i class="fas fa-pen-fancy"></i> Rewrite
+        </button>
+        <div id="rewriteResult" class="ai-result" style="display:none;"></div>
+    </div>
+
+    <!-- Caption Generator -->
+    <div class="ai-card glass-card">
+        <div class="ai-card-header">
+            <h2>📸 Instagram Caption Generator</h2>
+            <p>Turn any quote into a viral Instagram caption with hashtags</p>
+        </div>
+        <textarea id="captionInput" class="ai-textarea" placeholder="Enter your quote..." rows="3" maxlength="300"></textarea>
+        <button class="btn btn-primary" onclick="generateCaption()" id="captionBtn">
+            <i class="fab fa-instagram"></i> Generate Caption
+        </button>
+        <div id="captionResult" class="ai-result caption-result" style="display:none;">
+            <pre id="captionText"></pre>
+            <button class="btn btn-ghost btn-sm" onclick="copyCaptionText()">
+                <i class="fas fa-copy"></i> Copy Caption
+            </button>
+        </div>
+    </div>
+
+    <!-- Explain a Quote (NEW — AI Only) -->
+    <div class="ai-card glass-card">
+        <div class="ai-card-header">
+            <h2>🧠 Explain a Quote</h2>
+            <p>Get a clear, relatable explanation of any quote's deeper meaning</p>
+        </div>
+        <textarea id="explainInput" class="ai-textarea" placeholder="Paste any quote to understand its meaning..." rows="3" maxlength="300"></textarea>
+        <div class="ai-input-row">
+            <input id="explainAuthor" class="ai-select" style="flex:1;padding:0.65rem 1rem;background:var(--bg-card);border:1px solid var(--glass-border);border-radius:var(--radius-sm);color:var(--text-primary);font-family:var(--font-main);outline:none;" placeholder="Author (optional)">
+            <button class="btn btn-primary" onclick="explainQuote()" id="explainBtn">
+                <i class="fas fa-lightbulb"></i> Explain
+            </button>
+        </div>
+        <div id="explainResult" class="ai-result" style="display:none;"></div>
+    </div>
+
+    <!-- Hashtag Generator (NEW — AI Only) -->
+    <div class="ai-card glass-card">
+        <div class="ai-card-header">
+            <h2># Trending Hashtags</h2>
+            <p>Generate trending hashtags for your quote — ready to paste on Instagram/Twitter</p>
+        </div>
+        <textarea id="hashtagInput" class="ai-textarea" placeholder="Enter your quote..." rows="3" maxlength="300"></textarea>
+        <div class="ai-input-row">
+            <select id="hashtagCategory" class="ai-select">
+                <option value="motivation">Motivation</option>
+                <option value="success">Success</option>
+                <option value="gym">Gym</option>
+                <option value="love">Love</option>
+                <option value="money">Money</option>
+                <option value="study">Study</option>
+                <option value="life">Life</option>
+            </select>
+            <button class="btn btn-primary" onclick="generateHashtags()" id="hashtagBtn">
+                <i class="fas fa-hashtag"></i> Generate
+            </button>
+        </div>
+        <div id="hashtagResult" class="ai-result" style="display:none;"></div>
+    </div>
+</div>
+
+<script>
+// ── Daily Quote ─────────────────────────────────────────────────
+function loadDailyQuote(mood = 'default') {
+    const el = document.getElementById('dailyQuoteDisplay');
+    el.innerHTML = '<div class="spinner"></div>';
+    fetch(`/ai/daily?mood=${mood}`)
+        .then(r => r.json())
+        .then(d => {
+            const safeQuote = d.quote.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            el.innerHTML = `
+                <blockquote class="daily-quote-text">"${d.quote}"</blockquote>
+                <div class="daily-category">${d.category}${d.source === 'gemini' ? ' <span style="font-size:0.7rem;opacity:0.6;">• Gemini</span>' : ''}</div>
+                <div class="daily-actions">
+                    <button class="btn btn-ghost btn-sm" onclick="copyQuote('${safeQuote}', this)">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                    <button class="btn btn-ghost btn-sm" onclick="openImageModal('${safeQuote}', 'QuoteVerse')">
+                        <i class="fas fa-image"></i> Download
+                    </button>
+                </div>`;
+        });
+}
+loadDailyQuote();
+
+document.querySelectorAll('.mood-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.mood-pill').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        loadDailyQuote(btn.dataset.mood);
+    });
+});
+
+// ── Generate Quotes ─────────────────────────────────────────────
+function generateQuotes() {
+    const mood = document.getElementById('genMood').value;
+    const count = document.getElementById('genCount').value;
+    const container = document.getElementById('generatedQuotes');
+    const btn = document.getElementById('genBtn');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+    btn.disabled = true;
+    container.innerHTML = '<div class="spinner"></div>';
+
+    fetch('/ai/generate', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({mood, count: parseInt(count)})
+    }).then(r => r.json()).then(d => {
+        const sourceTag = d.source === 'gemini' ? '<span style="font-size:0.75rem;color:var(--info);margin-left:0.5rem;"><i class="fas fa-bolt"></i> Gemini</span>' : '';
+        container.innerHTML = d.quotes.map((q, i) => {
+            const safeQ = q.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            return `
+            <div class="gen-quote-item">
+                <span class="gen-num">${i+1}</span>
+                <p>${q}</p>
+                <div class="gen-actions">
+                    <button class="btn btn-ghost btn-sm" onclick="copyQuote('${safeQ}', this)"><i class="fas fa-copy"></i></button>
+                    <button class="btn btn-ghost btn-sm" onclick="openImageModal('${safeQ}', 'QuoteVerse')"><i class="fas fa-image"></i></button>
+                </div>
+            </div>`;
+        }).join('') + (sourceTag ? `<div style="text-align:right;padding-top:0.5rem;">${sourceTag}</div>` : '');
+        btn.innerHTML = '<i class="fas fa-magic"></i> Generate';
+        btn.disabled = false;
+    }).catch(() => {
+        btn.innerHTML = '<i class="fas fa-magic"></i> Generate';
+        btn.disabled = false;
+        showToast('Something went wrong. Try again.', 'danger');
+    });
+}
+
+// ── Rewrite Quote ────────────────────────────────────────────────
+let selectedStyle = 'deep';
+document.querySelectorAll('.style-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedStyle = btn.dataset.style;
+    });
+});
+
+function rewriteQuote() {
+    const quote = document.getElementById('rewriteInput').value.trim();
+    if (!quote) return showToast('Please enter a quote first!', 'warning');
+    const result = document.getElementById('rewriteResult');
+    const btn = document.getElementById('rewriteBtn');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Rewriting...';
+    btn.disabled = true;
+    result.style.display = 'block';
+    result.innerHTML = '<div class="spinner"></div>';
+
+    fetch('/ai/rewrite', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({quote, style: selectedStyle})
+    }).then(r => r.json()).then(d => {
+        const safeQ = d.rewritten.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        const sourceTag = d.source === 'gemini' ? '<span style="font-size:0.75rem;color:var(--info);"><i class="fas fa-bolt"></i> Gemini</span>' : '';
+        result.innerHTML = `
+            <div class="rewrite-output">
+                <span class="rewrite-label">${selectedStyle.toUpperCase()} version: ${sourceTag}</span>
+                <p>${d.rewritten}</p>
+                <button class="btn btn-ghost btn-sm" onclick="copyQuote('${safeQ}', this)">
+                    <i class="fas fa-copy"></i> Copy
+                </button>
+            </div>`;
+        btn.innerHTML = '<i class="fas fa-pen-fancy"></i> Rewrite';
+        btn.disabled = false;
+    }).catch(() => {
+        btn.innerHTML = '<i class="fas fa-pen-fancy"></i> Rewrite';
+        btn.disabled = false;
+        showToast('Rewrite failed. Try again.', 'danger');
+    });
+}
+
+// ── Caption Generator ────────────────────────────────────────────
+function generateCaption() {
+    const quote = document.getElementById('captionInput').value.trim();
+    if (!quote) return showToast('Please enter a quote first!', 'warning');
+    const btn = document.getElementById('captionBtn');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+    btn.disabled = true;
+    document.getElementById('captionResult').style.display = 'none';
+
+    fetch('/ai/caption', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({quote})
+    }).then(r => r.json()).then(d => {
+        document.getElementById('captionText').textContent = d.caption;
+        document.getElementById('captionResult').style.display = 'block';
+        btn.innerHTML = '<i class="fab fa-instagram"></i> Generate Caption';
+        btn.disabled = false;
+    }).catch(() => {
+        btn.innerHTML = '<i class="fab fa-instagram"></i> Generate Caption';
+        btn.disabled = false;
+        showToast('Caption generation failed.', 'danger');
+    });
+}
+
+function copyCaptionText() {
+    const text = document.getElementById('captionText').textContent;
+    navigator.clipboard.writeText(text).then(() => showToast('Caption copied!', 'success'));
+}
+
+// ── Explain Quote (NEW) ──────────────────────────────────────────
+function explainQuote() {
+    const quote = document.getElementById('explainInput').value.trim();
+    const author = document.getElementById('explainAuthor').value.trim() || 'Unknown';
+    if (!quote) return showToast('Please enter a quote first!', 'warning');
+
+    const result = document.getElementById('explainResult');
+    const btn = document.getElementById('explainBtn');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Thinking...';
+    btn.disabled = true;
+    result.style.display = 'block';
+    result.innerHTML = '<div class="spinner"></div>';
+
+    fetch('/ai/explain', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({quote, author})
+    }).then(r => r.json()).then(d => {
+        const sourceTag = d.source === 'gemini' ? '<span style="font-size:0.75rem;color:var(--info);"><i class="fas fa-bolt"></i> Gemini</span>' : '';
+        result.innerHTML = `
+            <div class="rewrite-output">
+                <span class="rewrite-label">Explanation ${sourceTag}</span>
+                <p style="white-space:pre-wrap;line-height:1.8;">${d.explanation}</p>
+                <button class="btn btn-ghost btn-sm" onclick="copyQuote('${d.explanation.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, '\\n')}', this)">
+                    <i class="fas fa-copy"></i> Copy
+                </button>
+            </div>`;
+        btn.innerHTML = '<i class="fas fa-lightbulb"></i> Explain';
+        btn.disabled = false;
+    }).catch(() => {
+        btn.innerHTML = '<i class="fas fa-lightbulb"></i> Explain';
+        btn.disabled = false;
+        showToast('Explanation failed. Try again.', 'danger');
+    });
+}
+
+// ── Hashtag Generator (NEW) ──────────────────────────────────────
+function generateHashtags() {
+    const quote = document.getElementById('hashtagInput').value.trim();
+    const category = document.getElementById('hashtagCategory').value;
+    if (!quote) return showToast('Please enter a quote first!', 'warning');
+
+    const result = document.getElementById('hashtagResult');
+    const btn = document.getElementById('hashtagBtn');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+    btn.disabled = true;
+    result.style.display = 'block';
+    result.innerHTML = '<div class="spinner"></div>';
+
+    fetch('/ai/hashtags', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({quote, category})
+    }).then(r => r.json()).then(d => {
+        const tags = d.hashtags.join('  ');
+        const sourceTag = d.source === 'gemini' ? '<span style="font-size:0.75rem;color:var(--info);"><i class="fas fa-bolt"></i> Gemini</span>' : '';
+        result.innerHTML = `
+            <div class="rewrite-output">
+                <span class="rewrite-label">Hashtags ${sourceTag}</span>
+                <p style="color:var(--info);font-size:0.95rem;line-height:2;word-break:break-word;">${tags}</p>
+                <button class="btn btn-ghost btn-sm" onclick="copyQuote('${tags.replace(/'/g, "\\'")}', this)">
+                    <i class="fas fa-copy"></i> Copy All
+                </button>
+            </div>`;
+        btn.innerHTML = '<i class="fas fa-hashtag"></i> Generate';
+        btn.disabled = false;
+    }).catch(() => {
+        btn.innerHTML = '<i class="fas fa-hashtag"></i> Generate';
+        btn.disabled = false;
+        showToast('Hashtag generation failed.', 'danger');
+    });
+}
+</script>
+{% endblock %}

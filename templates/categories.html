@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}All Categories — QuoteVerse{% endblock %}
+{% block content %}
+<div class="container page-container">
+    <div class="page-header">
+        <h1 class="page-title">📂 <span class="gradient-text">Categories</span></h1>
+        <p class="page-subtitle">Find quotes that speak to your current chapter</p>
+    </div>
+    <div class="categories-grid">
+        {% for cat in categories %}
+        <a href="/category/{{ cat.name }}" class="category-card glass-card" style="--cat-color: {{ cat.color }}">
+            <div class="cat-card-glow"></div>
+            <div class="cat-icon">{{ cat.icon }}</div>
+            <h3 class="cat-name">{{ cat.name }}</h3>
+            <span class="cat-count">{{ cat.count }} quotes</span>
+            <div class="cat-arrow"><i class="fas fa-arrow-right"></i></div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

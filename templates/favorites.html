@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}My Favorites — QuoteVerse{% endblock %}
+{% block content %}
+<div class="container page-container">
+    <div class="page-header">
+        <h1 class="page-title">⭐ <span class="gradient-text">My Favorites</span></h1>
+        <p class="page-subtitle">Quotes you've saved to revisit anytime</p>
+    </div>
+    {% set category_icons = {'Success':'🏆','Study':'📚','Gym':'💪','Love':'❤️','Breakup':'💔','Money':'💰','Discipline':'🎯','Life':'🌱','Mindset':'🧠','Hinglish':'🇮🇳'} %}
+    {% set category_colors = {'Success':'#f59e0b','Study':'#3b82f6','Gym':'#ef4444','Love':'#ec4899','Breakup':'#8b5cf6','Money':'#10b981','Discipline':'#f97316','Life':'#06b6d4','Mindset':'#6366f1','Hinglish':'#84cc16'} %}
+    <div class="quote-grid">
+        {% for q in quotes.items %}
+        {% include "partials/quote_card.html" %}
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">⭐</div>
+            <h3>No favorites yet</h3>
+            <p>Tap the ⭐ on any quote to save it here</p>
+            <a href="/" class="btn btn-primary">Explore Quotes</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

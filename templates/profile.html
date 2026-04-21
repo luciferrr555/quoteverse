@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}{{ profile_user.username }}'s Profile — QuoteVerse{% endblock %}
+{% block content %}
+<div class="container page-container" style="max-width: 900px;">
+    <div class="profile-header glass-card">
+        <div class="profile-avatar-lg">{{ profile_user.username[0].upper() }}</div>
+        <div class="profile-info">
+            <h1 class="profile-username">{{ profile_user.username }}</h1>
+            {% if profile_user.bio %}<p class="profile-bio">{{ profile_user.bio }}</p>{% endif %}
+            <div class="profile-stats">
+                <div class="pstat"><strong>{{ profile_user.submitted_quotes.filter_by(approved=True).count() }}</strong> Quotes</div>
+                <div class="pstat"><strong>{{ profile_user.followers_count }}</strong> Followers</div>
+                <div class="pstat"><strong>{{ profile_user.following_count }}</strong> Following</div>
+                {% if profile_user.streak > 0 %}
+                <div class="pstat streak"><strong>🔥 {{ profile_user.streak }}</strong> Day Streak</div>
+                {% endif %}
+            </div>
+            {% if profile_user.is_premium %}
+            <span class="premium-badge">⭐ Premium</span>
+            {% endif %}
+            <div class="profile-actions">
+                {% if current_user.is_authenticated and current_user.id != profile_user.id %}
+                <button class="btn btn-primary follow-btn" id="followBtn" onclick="followUser('{{ profile_user.username }}')">
+                    {{ '✅ Following' if is_following else '+ Follow' }}
+                </button>
+                {% elif current_user.is_authenticated and current_user.id == profile_user.id %}
+                <a href="/profile/edit" class="btn btn-ghost">Edit Profile</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <h3 class="section-title">📝 Quotes by {{ profile_user.username }}</h3>
+    <div class="quote-grid">
+        {% set category_icons = {'Success':'🏆','Study':'📚','Gym':'💪','Love':'❤️','Breakup':'💔','Money':'💰','Discipline':'🎯','Life':'🌱','Mindset':'🧠','Hinglish':'🇮🇳'} %}
+        {% set category_colors = {'Success':'#f59e0b','Study':'#3b82f6','Gym':'#ef4444','Love':'#ec4899','Breakup':'#8b5cf6','Money':'#10b981','Discipline':'#f97316','Life':'#06b6d4','Mindset':'#6366f1','Hinglish':'#84cc16'} %}
+        {% for q in quotes.items %}
+        {% include "partials/quote_card.html" %}
+        {% else %}
+        <div class="empty-state"><p>No approved quotes yet.</p></div>
+        {% endfor %}
+    </div>
+</div>
+<script>
+function followUser(username) {
+    fetch(`/follow/${username}`, {method:'POST'})
+        .then(r => r.json())
+        .then(d => {
+            const btn = document.getElementById('followBtn');
+            btn.textContent = d.following ? '✅ Following' : '+ Follow';
+            showToast(d.following ? 'Following! 🎉' : 'Unfollowed.', 'success');
+        });
+}
+</script>
+{% endblock %}

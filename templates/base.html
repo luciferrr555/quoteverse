@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{% block meta_description %}QuoteVerse — Discover, share, and generate motivational quotes that change your mindset every day.{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}QuoteVerse{% endblock %}">
+    <meta property="og:description" content="Daily motivation, wisdom, and inspiration for every mood.">
+    <meta property="og:type" content="website">
+    <title>{% block title %}QuoteVerse — Daily Motivation{% endblock %}</title>
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<!-- ── NAVBAR ─────────────────────────────────────────────── -->
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-brand">
+            <span class="brand-icon">✨</span>
+            <span class="brand-text">QuoteVerse</span>
+        </a>
+
+        <div class="nav-links" id="navLinks">
+            <a href="/" class="nav-link {% if request.endpoint == 'quotes.index' %}active{% endif %}">Home</a>
+            <a href="/categories" class="nav-link {% if request.endpoint == 'quotes.categories' %}active{% endif %}">Categories</a>
+            <a href="/trending" class="nav-link {% if request.endpoint == 'quotes.trending' %}active{% endif %}">🔥 Trending</a>
+            <a href="/ai/" class="nav-link {% if request.endpoint and 'ai' in request.endpoint %}active{% endif %}">🤖 AI Tools</a>
+            {% if current_user.is_authenticated %}
+                <a href="/submit" class="nav-link {% if request.endpoint == 'quotes.submit_quote' %}active{% endif %}">+ Submit</a>
+                <a href="/favorites" class="nav-link">⭐ Saved</a>
+                {% if current_user.is_admin %}
+                <a href="/admin/" class="nav-link admin-link">⚙️ Admin</a>
+                {% endif %}
+            {% endif %}
+        </div>
+
+        <div class="nav-actions">
+            <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+                <i class="fas fa-moon" id="themeIcon"></i>
+            </button>
+            {% if current_user.is_authenticated %}
+                <div class="nav-user" id="navUser">
+                    <div class="avatar-small">{{ current_user.username[0].upper() }}</div>
+                    <div class="dropdown-menu" id="userDropdown">
+                        <a href="/profile/{{ current_user.username }}" class="dropdown-item">
+                            <i class="fas fa-user"></i> My Profile
+                        </a>
+                        <a href="/favorites" class="dropdown-item">
+                            <i class="fas fa-star"></i> Favorites
+                        </a>
+                        {% if current_user.streak > 0 %}
+                        <div class="dropdown-item streak-item">
+                            <i class="fas fa-fire"></i> {{ current_user.streak }} day streak!
+                        </div>
+                        {% endif %}
+                        <hr class="dropdown-divider">
+                        <a href="/auth/logout" class="dropdown-item danger">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            {% else %}
+                <a href="/auth/login" class="btn btn-ghost">Login</a>
+                <a href="/auth/register" class="btn btn-primary">Sign Up Free</a>
+            {% endif %}
+            <button class="hamburger" id="hamburger" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </div>
+</nav>
+
+<!-- ── FLASH MESSAGES ─────────────────────────────────────── -->
+<div class="toast-container" id="toastContainer">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="toast toast-{{ category }}" data-auto-close="4000">
+                    <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                    <span>{{ message }}</span>
+                    <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+</div>
+
+<!-- ── MAIN CONTENT ───────────────────────────────────────── -->
+<main class="main-content">
+    {% block content %}{% endblock %}
+</main>
+
+<!-- ── FOOTER ─────────────────────────────────────────────── -->
+<footer class="footer">
+    <div class="footer-container">
+        <div class="footer-brand">
+            <span class="brand-icon">✨</span>
+            <span class="brand-text">QuoteVerse</span>
+            <p>Your daily dose of inspiration, wisdom, and motivation.</p>
+        </div>
+        <div class="footer-links">
+            <div class="footer-col">
+                <h4>Explore</h4>
+                <a href="/trending">🔥 Trending</a>
+                <a href="/latest">🆕 Latest</a>
+                <a href="/categories">📂 Categories</a>
+                <a href="/ai/">🤖 AI Tools</a>
+            </div>
+            <div class="footer-col">
+                <h4>Account</h4>
+                {% if current_user.is_authenticated %}
+                <a href="/profile/{{ current_user.username }}">My Profile</a>
+                <a href="/favorites">Favorites</a>
+                <a href="/submit">Submit Quote</a>
+                {% else %}
+                <a href="/auth/login">Login</a>
+                <a href="/auth/register">Sign Up</a>
+                {% endif %}
+            </div>
+            <div class="footer-col">
+                <h4>Info</h4>
+                <a href="/about">About Us</a>
+                <a href="/about#contact">Contact</a>
+            </div>
+        </div>
+        <!-- AdSense Placeholder -->
+        <div class="adsense-footer" style="display:none;">
+            <!-- Google AdSense: Replace with your code -->
+            <!-- <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXX" data-ad-slot="XXXX" data-ad-format="auto"></ins> -->
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>© 2024 QuoteVerse. Built with ❤️ to inspire the world.</p>
+    </div>
+</footer>
+
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="/static/js/main.js"></script>
+<script src="/static/js/quote-image.js"></script>
+{% block extra_js %}{% endblock %}
+
+<script>
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/static/sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>

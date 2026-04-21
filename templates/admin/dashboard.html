@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard — QuoteVerse{% endblock %}
+{% block content %}
+<div class="container page-container">
+    <div class="page-header">
+        <h1 class="page-title">⚙️ <span class="gradient-text">Admin Dashboard</span></h1>
+        <p class="page-subtitle">Platform analytics and management</p>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="admin-stats">
+        <div class="stat-card glass-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-value">{{ total_users }}</div>
+            <div class="stat-label">Total Users</div>
+        </div>
+        <div class="stat-card glass-card">
+            <div class="stat-icon">📝</div>
+            <div class="stat-value">{{ total_quotes }}</div>
+            <div class="stat-label">Live Quotes</div>
+        </div>
+        <div class="stat-card glass-card pending-stat">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-value">{{ pending_quotes }}</div>
+            <div class="stat-label">Pending Review</div>
+        </div>
+        <div class="stat-card glass-card">
+            <div class="stat-icon">👁️</div>
+            <div class="stat-value">{{ visit_count }}</div>
+            <div class="stat-label">Visits Today</div>
+        </div>
+    </div>
+
+    <!-- Visits Chart -->
+    <div class="admin-section glass-card">
+        <h3>📈 Last 7 Days Visits</h3>
+        <div class="chart-container">
+            <canvas id="visitsChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Top Quotes -->
+    <div class="admin-section glass-card">
+        <h3>🏆 Top Quotes by Likes</h3>
+        <div class="admin-table-wrapper">
+            <table class="admin-table">
+                <thead><tr><th>#</th><th>Quote</th><th>Category</th><th>Likes</th><th>Views</th><th>Actions</th></tr></thead>
+                <tbody>
+                    {% for q in top_quotes %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td class="quote-cell">{{ q.text[:60] }}{% if q.text|length > 60 %}...{% endif %}</td>
+                        <td><span class="badge">{{ q.category }}</span></td>
+                        <td>❤️ {{ q.likes_count }}</td>
+                        <td>👁️ {{ q.views }}</td>
+                        <td>
+                            <a href="/quote/{{ q.slug }}" class="btn btn-ghost btn-sm" target="_blank">View</a>
+                            <button class="btn btn-danger btn-sm" onclick="adminDelete({{ q.id }})">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pending Quotes -->
+    <div class="admin-section glass-card">
+        <h3>⏳ Pending Approval ({{ pending_quotes }})</h3>
+        {% if pending %}
+        <div id="pendingList">
+            {% for q in pending %}
+            <div class="pending-card" id="pending-{{ q.id }}">
+                <div class="pending-meta">
+                    <span class="badge">{{ q.category }}</span>
+                    <span class="pending-date">{{ q.created_at.strftime('%b %d, %Y') }}</span>
+                </div>
+                <p class="pending-text">{{ q.text }}</p>
+                <div class="pending-author">— {{ q.author }}</div>
+                <div class="pending-actions">
+                    <button class="btn btn-success btn-sm" onclick="approveQuote({{ q.id }})">✅ Approve</button>
+                    <button class="btn btn-danger btn-sm" onclick="rejectQuote({{ q.id }})">❌ Reject</button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state small">
+            <div class="empty-icon">✅</div>
+            <p>All caught up! No pending quotes.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Recent Users -->
+    <div class="admin-section glass-card">
+        <h3>👥 Recent Users</h3>
+        <div class="admin-table-wrapper">
+            <table class="admin-table">
+                <thead><tr><th>Username</th><th>Email</th><th>Admin</th><th>Joined</th><th>Actions</th></tr></thead>
+                <tbody>
+                    {% for u in recent_users %}
+                    <tr id="user-row-{{ u.id }}">
+                        <td><a href="/profile/{{ u.username }}">{{ u.username }}</a></td>
+                        <td>{{ u.email }}</td>
+                        <td>
+                            <span class="badge {% if u.is_admin %}badge-admin{% endif %}" id="admin-badge-{{ u.id }}">
+                                {{ '⚙️ Admin' if u.is_admin else 'User' }}
+                            </span>
+                        </td>
+                        <td>{{ u.created_at.strftime('%b %d, %Y') }}</td>
+                        <td>
+                            {% if u.id != current_user.id %}
+                            <button class="btn btn-ghost btn-sm" onclick="toggleAdmin({{ u.id }})">Toggle Admin</button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <a href="/admin/users" class="btn btn-ghost btn-sm">View All Users →</a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const chartData = {{ visits_chart | tojson }};
+const ctx = document.getElementById('visitsChart').getContext('2d');
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: chartData.map(d => d.date),
+        datasets: [{
+            label: 'Visits',
+            data: chartData.map(d => d.count),
+            backgroundColor: 'rgba(99,102,241,0.6)',
+            borderColor: '#6366f1',
+            borderWidth: 2,
+            borderRadius: 8,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+            x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+        }
+    }
+});
+
+function approveQuote(id) {
+    fetch(`/admin/approve/${id}`, {method:'POST'}).then(r=>r.json()).then(d => {
+        document.getElementById(`pending-${id}`).remove();
+        showToast('Quote approved! ✅', 'success');
+    });
+}
+function rejectQuote(id) {
+    if (!confirm('Reject and delete this quote?')) return;
+    fetch(`/admin/reject/${id}`, {method:'POST'}).then(r=>r.json()).then(d => {
+        document.getElementById(`pending-${id}`).remove();
+        showToast('Quote rejected.', 'info');
+    });
+}
+function adminDelete(id) {
+    if (!confirm('Delete this quote permanently?')) return;
+    fetch(`/admin/delete-quote/${id}`, {method:'POST'}).then(() => {
+        showToast('Quote deleted.', 'info');
+        setTimeout(() => location.reload(), 1000);
+    });
+}
+function toggleAdmin(id) {
+    fetch(`/admin/toggle-admin/${id}`, {method:'POST'}).then(r=>r.json()).then(d => {
+        const badge = document.getElementById(`admin-badge-${id}`);
+        badge.textContent = d.is_admin ? '⚙️ Admin' : 'User';
+        badge.className = `badge ${d.is_admin ? 'badge-admin' : ''}`;
+        showToast('Admin status updated.', 'success');
+    });
+}
+</script>
+{% endblock %}

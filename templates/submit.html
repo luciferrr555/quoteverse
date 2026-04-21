@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Submit a Quote — QuoteVerse{% endblock %}
+{% block content %}
+<div class="container page-container" style="max-width: 600px;">
+    <div class="page-header">
+        <h1 class="page-title">📝 <span class="gradient-text">Submit a Quote</span></h1>
+        <p class="page-subtitle">Share your wisdom with the world. All quotes are reviewed before publishing.</p>
+    </div>
+    <div class="submit-card glass-card">
+        <form method="POST" class="auth-form">
+            <div class="form-group">
+                <label for="text">Quote Text *</label>
+                <textarea id="text" name="text" class="ai-textarea" rows="4" placeholder="Enter the quote..." required minlength="10" maxlength="600"></textarea>
+                <div class="char-counter" id="charCounter">0 / 600</div>
+            </div>
+            <div class="form-group">
+                <label for="author">Author</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-user input-icon"></i>
+                    <input type="text" id="author" name="author" placeholder="Author name (or leave as Unknown)" maxlength="100">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="category">Category *</label>
+                <select id="category" name="category" class="ai-select full-width" required>
+                    <option value="">— Select Category —</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat }}">{{ category_icons.get(cat, '📝') }} {{ cat }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="submit-preview" id="submitPreview" style="display:none;">
+                <h4>Preview</h4>
+                <blockquote id="previewText"></blockquote>
+                <div id="previewAuthor"></div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full btn-lg">
+                <i class="fas fa-paper-plane"></i> Submit for Review
+            </button>
+        </form>
+    </div>
+</div>
+<script>
+const textArea = document.getElementById('text');
+const counter = document.getElementById('charCounter');
+const preview = document.getElementById('submitPreview');
+textArea.addEventListener('input', function() {
+    counter.textContent = `${this.value.length} / 600`;
+    if (this.value.trim().length > 10) {
+        document.getElementById('previewText').textContent = `"${this.value}"`;
+        document.getElementById('previewAuthor').textContent = `— ${document.getElementById('author').value || 'Unknown'}`;
+        preview.style.display = 'block';
+    } else {
+        preview.style.display = 'none';
+    }
+});
+</script>
+{% endblock %}

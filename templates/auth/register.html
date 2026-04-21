@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Sign Up — QuoteVerse{% endblock %}
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card glass-card">
+        <div class="auth-header">
+            <a href="/" class="auth-brand">✨ QuoteVerse</a>
+            <h1>Create your account</h1>
+            <p>Join thousands finding daily inspiration</p>
+        </div>
+        <form method="POST" class="auth-form" id="registerForm">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-at input-icon"></i>
+                    <input type="text" id="username" name="username" placeholder="yourname" required minlength="3" maxlength="30" autocomplete="username">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-envelope input-icon"></i>
+                    <input type="email" id="email" name="email" placeholder="your@email.com" required autocomplete="email">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="password" name="password" placeholder="Min 6 characters" required minlength="6" autocomplete="new-password">
+                    <button type="button" class="toggle-password" onclick="togglePwd('password')"><i class="fas fa-eye"></i></button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="confirm_password">Confirm Password</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="confirm_password" name="confirm_password" placeholder="Repeat password" required autocomplete="new-password">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="password-strength" id="pwStrength"></div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full btn-lg">Create Account 🚀</button>
+        </form>
+        <div class="auth-footer">
+            Already have an account? <a href="/auth/login">Login here</a>
+        </div>
+    </div>
+    <div class="auth-bg-quote">
+        <blockquote>"The journey of a thousand miles begins with a single step."</blockquote>
+        <cite>— Lao Tzu</cite>
+    </div>
+</div>
+<script>
+function togglePwd(id) {
+    const el = document.getElementById(id);
+    el.type = el.type === 'password' ? 'text' : 'password';
+}
+document.getElementById('password').addEventListener('input', function() {
+    const v = this.value;
+    const el = document.getElementById('pwStrength');
+    let strength = 0, label = '';
+    if (v.length >= 6) strength++;
+    if (/[A-Z]/.test(v)) strength++;
+    if (/[0-9]/.test(v)) strength++;
+    if (/[^a-zA-Z0-9]/.test(v)) strength++;
+    const labels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
+    const classes = ['', 'strength-weak', 'strength-fair', 'strength-good', 'strength-strong'];
+    el.textContent = v.length ? `Password strength: ${labels[strength]}` : '';
+    el.className = 'password-strength ' + (classes[strength] || '');
+});
+</script>
+{% endblock %}
